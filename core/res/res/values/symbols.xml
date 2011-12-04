@@ -1864,6 +1864,7 @@
   <java-symbol type="string" name="global_action_expanded_desktop_on" />
   <java-symbol type="string" name="global_action_screenshot" />
   <java-symbol type="string" name="reboot_system" />
+<<<<<<< HEAD
   <java-symbol type="string" name="reboot_safe_mode" />
   <java-symbol type="string" name="reboot_progress" />
 
@@ -1913,8 +1914,9 @@
   <java-symbol type="string" name="websearch" />
 
 
-  <!-- WiFi SoftAp -->
+  <!-- WoH -->
   <java-symbol type="bool" name="config_wifiApFirmwareReload" />
   <java-symbol type="bool" name="config_wifiApStartInterface" />
+  <java-symbol type="string" name="config_legacyUmsLunFile" />
 
 </resources>
