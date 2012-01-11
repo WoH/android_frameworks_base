@@ -2540,6 +2540,13 @@ public final class Settings {
         public static final String NAV_BAR_COLOR = "nav_bar_color";
 
         /**
+         * Toggle to let trackball wake the screen.
+         * @hide
+         */
+        public static final String TRACKBALL_WAKE_SCREEN = "trackball_wake_screen";
+
+
+        /**
          * Ability to change navigation button color
          * Format: AARRGGBB|AARRGGBB|index[|speed]
          * First color is the primary, systemwide color
