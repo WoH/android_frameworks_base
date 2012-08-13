@@ -1750,4 +1750,6 @@
 
   <!-- WoH -->
   <java-symbol type="bool" name="config_wifiApFirmwareReload" />
+  <java-symbol type="bool" name="config_wifiApStartInterface" />
+
 </resources>
