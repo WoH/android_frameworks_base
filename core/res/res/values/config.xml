@@ -1041,4 +1041,13 @@
          The wallpaper width suggestion by the launcher may be too large for
          the GPU to handle. -->
     <integer name="config_wallpaperMaxWidth">-1</integer>
+
+    <!-- Flag indicating if the speed up audio on mt call code should be executed -->
+    <bool name="config_speed_up_audio_on_mt_calls">false</bool>
+
+    <!-- Boolean to enable stk functionality on Samsung phones -->
+    <bool name="config_samsung_stk">false</bool> 
+
+    <!-- If this value is true, we handle Samsung CDMA's message ID method -->
+    <bool name="config_smsSamsungCdmaAlternateMessageIDEncoding">false</bool>
 </resources>
