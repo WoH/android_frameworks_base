@@ -110,8 +110,7 @@ public class QuickSettings {
     public void setupQuickSettings() {
         // Setup the tiles that we are going to be showing (including the temporary ones)
         LayoutInflater inflater = LayoutInflater.from(mContext);
-        mQSC.loadTiles();
-        mQSC.addQuickSettings(inflater);
+        mQSC.loadTiles(inflater);
 
         mTilesSetUp = true;
     }
