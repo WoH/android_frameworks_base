@@ -332,6 +332,10 @@
     <string name="reboot_reboot">Reboot</string>
     <!-- Button to reboot the phone into recovery, within the Reboot Options dialog -->
     <string name="reboot_recovery">Recovery</string>
+    <!-- Button to reboot the phone into bootloader, within the Reboot Options dialog -->
+    <string name="reboot_bootloader">Bootloader</string>
+    <!-- Button to reboot the phone into bootmenu, within the Reboot Options dialog -->
+    <string name="reboot_bootmenu">Bootmenu</string>
     <!-- Button to reboot the phone into fastboot, within the Reboot Options dialog -->
     <string name="reboot_fastboot">Fastboot</string>
     <!-- Button to reboot the phone into safe mode, within the Reboot Options dialog -->
@@ -342,6 +346,8 @@
     <!-- Reboot Confirmation Dialog.  When the user chooses to reboot the phone, there will be a confirmation dialog.  This is the message. -->
     <string name="reboot_confirm">Your device will reboot.</string>
 
+    <!-- label for item that screenshots in phone options dialog -->
+    <string name="global_action_screenshot">Screenshot</string>
     <!-- label for item that toggles expand desktop mode -->
     <string name="global_action_expanded_desktop">Expanded desktop</string>
     <!-- status message in phone options dialog for when expand desktop mode is on -->

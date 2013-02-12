@@ -82,8 +82,14 @@ public class PieStatusPanel {
 
         mContentFrame = (View) mPanel.getBar().mContainer.findViewById(R.id.content_frame);
         mScrollView = (ScrollView) mPanel.getBar().mContainer.findViewById(R.id.content_scroll);
-        mScrollView.setOnTouchListener(new OnTouchListener(){
-            final int SCROLLING_DISTANCE_TRIGGER = 100;
+        mScrollView.setOnTouchListener(new ViewOnTouchListener());
+        mContentFrame.setOnTouchListener(new ViewOnTouchListener());
+
+        mPanel.getBar().mContainer.setVisibility(View.GONE);
+    }
+
+    class ViewOnTouchListener implements OnTouchListener {
+        final int SCROLLING_DISTANCE_TRIGGER = 100;
             float scrollX;
             float scrollY;
             boolean hasScrolled;
@@ -111,10 +117,7 @@ public class PieStatusPanel {
                         break;
                 }
                 return false;
-            }                               
-        });
-
-        mPanel.getBar().mContainer.setVisibility(View.GONE);
+            }                  
     }
 
     public int getFlipViewState() {
@@ -188,7 +191,7 @@ public class PieStatusPanel {
                 mPanel.invalidate();
             }
         });
-        alphAnimation.setDuration(1000);
+        alphAnimation.setDuration(600);
         alphAnimation.setInterpolator(new DecelerateInterpolator());
         alphAnimation.start();
 
@@ -209,6 +212,12 @@ public class PieStatusPanel {
 
     private void updateContainer(boolean visible) {
         mPanel.getBar().mContainer.setVisibility(visible ? View.VISIBLE : View.GONE);
+        updatePanelConfiguration();
+    }
+
+    public void updatePanelConfiguration() {
+        int padding = mContext.getResources().getDimensionPixelSize(R.dimen.pie_panel_padding);
+        mScrollView.setPadding(padding,0,padding,0);
     }
 
     public static WindowManager.LayoutParams getFlipPanelLayoutParams() {
