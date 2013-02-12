@@ -353,22 +353,6 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
             // next: airplane mode
             mItems.add(mAirplaneModeOn);
 
-            // next: screenshot
-            mItems.add(
-                new SinglePressAction(R.drawable.ic_lock_screenshot, R.string.global_action_screenshot) {
-                    public void onPress() {
-                        takeScreenshot();
-                    }
-
-                    public boolean showDuringKeyguard() {
-                        return true;
-                    }
-
-                    public boolean showBeforeProvisioning() {
-                        return true;
-                    }
-                });
-
             // next: bug report, if enabled
             if (Settings.Secure.getInt(mContext.getContentResolver(),
                     Settings.Secure.BUGREPORT_IN_POWER_MENU, 0) != 0) {
@@ -502,7 +486,6 @@ class GlobalActions implements DialogInterface.OnDismissListener, DialogInterfac
                         };
                         msg.replyTo = new Messenger(h);
                         msg.arg1 = msg.arg2 = 0;
-
 
                         /* wait for the dialog box to close */
                         try {
