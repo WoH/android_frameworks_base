@@ -1043,7 +1043,6 @@
         <item>100</item>
     </integer-array>
 
-<<<<<<< HEAD
     <!-- Path to the library that contains a device specific key handler -->
     <string name="config_deviceKeyHandlerLib" translatable="false"></string>
 
