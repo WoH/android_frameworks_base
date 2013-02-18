@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2006 The Android Open Source Project
  * This code has been modified. Portions copyright (C) 2012, ParanoidAndroid Project.
+ * This code has been modified. Portions copyright (C) 2011, The CyanogenMod Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2379,6 +2380,13 @@ public final class Settings {
         public static final String VOLUME_LINK_NOTIFICATION = "volume_link_notification";
 
         /**
+         * Quick Settings Quick Pulldown
+         *
+         * @hide
+         */
+        public static final String QS_QUICK_PULLDOWN = "qs_quick_pulldown";
+
+        /**
          * Navigation controls to Use
          *
          * @hide
@@ -2662,6 +2670,12 @@ public final class Settings {
         * @hide
         */
         public static final String EXPANDED_RING_MODE = "expanded_ring_mode";
+
+        /**
+         * Weather to minimize lockscreen challenge on screen turned on
+         * @hide
+         */
+        public static final String LOCKSCREEN_MAXIMIZE_WIDGETS = "lockscreen_maximize_widgets";
 
         /**
          * Volume keys control cursor in text fields (default is 0)
