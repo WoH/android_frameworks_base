@@ -37,11 +37,8 @@ PRODUCT_COPY_FILES += \
 	$(LOCAL_PATH)/effects/ogg/VideoRecord.ogg:system/media/audio/ui/VideoRecord.ogg \
 	$(LOCAL_PATH)/effects/ogg/VideoStop.ogg:system/media/audio/ui/VideoStop.ogg \
 	$(LOCAL_PATH)/effects/ogg/VolumeIncremental.ogg:system/media/audio/ui/VolumeIncremental.ogg \
-<<<<<<< HEAD
 	$(LOCAL_PATH)/effects/ogg/WirelessChargingStarted.ogg:system/media/audio/ui/WirelessChargingStarted.ogg
-=======
-    $(LOCAL_PATH)/effects/ogg/WirelessChargingStarted.ogg:system/media/audio/ui/WirelessChargingStarted.ogg
->>>>>>> e39046253b7a7bb0942b99dfcb1d7d2cf1b91162
+
 
 # Notifications
 PRODUCT_COPY_FILES += \
