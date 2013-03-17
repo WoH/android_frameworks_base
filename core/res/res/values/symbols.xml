@@ -1752,5 +1752,6 @@
   <java-symbol type="bool" name="config_wifiApFirmwareReload" />
   <java-symbol type="bool" name="config_wifiApStartInterface" />
   <java-symbol type="string" name="config_legacyUmsLunFile" />
+  <java-symbol type="bool" name="config_setLandscapeProp" />
 
 </resources>
