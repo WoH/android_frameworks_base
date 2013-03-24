@@ -542,6 +542,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     dispatchMediaKeyRepeatWithWakeLock((KeyEvent)msg.obj);
                     break;
                 case MSG_DISPATCH_VOLKEY_WITH_WAKE_LOCK:
+                    mIsLongPress = true;
                     dispatchMediaKeyWithWakeLockToAudioService((KeyEvent)msg.obj);
                     dispatchMediaKeyWithWakeLockToAudioService(KeyEvent.changeAction((KeyEvent)msg.obj, KeyEvent.ACTION_UP));
                     break;
@@ -900,57 +901,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
         });
     }
 
-    private int updateFlingerOptions() {
-        int disableOverlays = 0;
-        try {
-            IBinder flinger = ServiceManager.getService("SurfaceFlinger");
-            if (flinger != null) {
-                Parcel data = Parcel.obtain();
-                Parcel reply = Parcel.obtain();
-                data.writeInterfaceToken("android.ui.ISurfaceComposer");
-                flinger.transact(1010, data, reply, 0);
-                reply.readInt();
-                reply.readInt();
-                reply.readInt();
-                reply.readInt();
-                disableOverlays = reply.readInt();
-                reply.recycle();
-                data.recycle();
-            }
-        } catch (RemoteException ex) {
-        }
-        return disableOverlays;
-    }
-
-    private void writeDisableOverlaysOption(int state) {
-        try {
-            IBinder flinger = ServiceManager.getService("SurfaceFlinger");
-            if (flinger != null) {
-                Parcel data = Parcel.obtain();
-                data.writeInterfaceToken("android.ui.ISurfaceComposer");
-                data.writeInt(state);
-                flinger.transact(1008, data, null, 0);
-                data.recycle();
-            }
-        } catch (RemoteException ex) {
-        }
-    }
-
-    private void updateHWOverlays() {
-        final boolean expDesktop = Settings.System.getInt(mContext.getContentResolver(),
-                    Settings.System.EXPANDED_DESKTOP_STATE, 0) == 1;
-        if (expDesktop || mSystemUiLayout == 1000) {
-            // Before switching to fullscreen safe current HW state, then disable
-            mDisableOverlays = updateFlingerOptions();
-            writeDisableOverlaysOption(1);
-        } 
-        else {
-            // When leaving fullscreen switch back to original HW state
-            int disableOverlays = updateFlingerOptions();
-            if (disableOverlays != mDisableOverlays) writeDisableOverlaysOption(mDisableOverlays);
-        }
-    }
-
     /** {@inheritDoc} */
     public void init(Context context, IWindowManager windowManager,
             WindowManagerFuncs windowManagerFuncs) {
@@ -969,8 +919,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
             mOrientationListener.setCurrentRotation(windowManager.getRotation());
         } catch (RemoteException ex) { }
 
-        mDisableOverlays = updateFlingerOptions();
-        updateHWOverlays();
         updateHybridLayout();
 
         mSettingsObserver = new SettingsObserver(mHandler);
@@ -989,7 +937,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
                 // Update layout
                 update(true);
-                updateHWOverlays();
                 
                 // Reset trigger
                 Settings.System.putInt(mContext.getContentResolver(), Settings.System.USER_INTERFACE_STATE, 0);
@@ -1004,7 +951,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
 
                 updateHybridLayout();
                 update(false);
-                updateHWOverlays();
 
                 if (Settings.System.getInt(mContext.getContentResolver(),
                     Settings.System.EXPANDED_DESKTOP_RESTART_LAUNCHER, 1) == 1) {

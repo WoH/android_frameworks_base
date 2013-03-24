@@ -2491,6 +2491,12 @@ public final class Settings {
         public static final String STATUS_ICON_COLOR = "status_icon_color";
 
         /**
+         * Foreground App
+         * @hide
+         */
+        public static final String FOREGROUND_APP = "foreground_app";
+
+        /**
          * Statusbar State
          * @hide
          */
@@ -2501,6 +2507,12 @@ public final class Settings {
          * @hide
          */
         public static final String EXPANDED_DESKTOP_RESTART_LAUNCHER = "expanded_desktop_restart_launcher";
+
+        /**
+        * Override and forcefully disable the fullscreen keyboard
+        * @hide
+        */
+        public static final String DISABLE_FULLSCREEN_KEYBOARD = "disable_fullscreen_keyboard";
 
         /**
          * Pie menu, should default to 1 (yes, show)
