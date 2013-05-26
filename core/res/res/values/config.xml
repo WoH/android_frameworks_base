@@ -1075,9 +1075,6 @@
          setting is used to determine, whether lidOpenRotation has to be
          applied. -->
     <bool name="config_hasRemovableLid">false</bool>
-    <!-- Flag indicating if the speed up audio on mt call code should be executed -->
-
-    <bool name="config_speed_up_audio_on_mt_calls">false</bool>
 
     <!--OPPO changes -->
     <!-- Disable the home key unlock setting -->
