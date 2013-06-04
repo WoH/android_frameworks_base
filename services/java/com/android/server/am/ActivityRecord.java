@@ -23,6 +23,7 @@ import com.android.server.am.ActivityStack.ActivityState;
 import android.app.Activity;
 import android.app.ActivityOptions;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
@@ -42,6 +43,7 @@ import android.util.EventLog;
 import android.util.Log;
 import android.util.Slog;
 import android.util.TimeUtils;
+import android.view.ContextThemeWrapper;
 import android.view.IApplicationToken;
 import android.view.WindowManager;
 
@@ -123,6 +125,10 @@ final class ActivityRecord {
     boolean frozenBeforeDestroy;// has been frozen but not yet destroyed.
     boolean immersive;      // immersive mode (don't interrupt if possible)
     boolean forceNewConfig; // force re-create with new config next time
+
+    boolean topIntent;
+    boolean newTask;
+    boolean floatingWindow;
 
     String stringName;      // for caching of toString().
     
@@ -317,6 +323,32 @@ final class ActivityRecord {
         }
     }
 
+    public void pf(String name, int f) {
+        android.util.Log.d("PARANOID", name);
+        if ((f & Intent.FLAG_FLOATING_WINDOW) == Intent.FLAG_FLOATING_WINDOW) android.util.Log.d("PARANOID", "  FLAG_FLOATING_WINDOW");
+        if ((f & Intent.FLAG_ACTIVITY_TASK_ON_HOME) == Intent.FLAG_ACTIVITY_TASK_ON_HOME) android.util.Log.d("PARANOID", "  FLAG_ACTIVITY_TASK_ON_HOME");
+        if ((f & Intent.FLAG_ACTIVITY_SINGLE_TOP) == Intent.FLAG_ACTIVITY_SINGLE_TOP) android.util.Log.d("PARANOID", "  FLAG_ACTIVITY_SINGLE_TOP");
+        if ((f & Intent.FLAG_ACTIVITY_CLEAR_TOP) == Intent.FLAG_ACTIVITY_CLEAR_TOP) android.util.Log.d("PARANOID", "  FLAG_ACTIVITY_CLEAR_TOP");
+        if ((f & Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT) == Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT) android.util.Log.d("PARANOID", "  FLAG_ACTIVITY_BROUGHT_TO_FRONT");
+        if ((f & Intent.FLAG_ACTIVITY_CLEAR_TASK) == Intent.FLAG_ACTIVITY_CLEAR_TASK) android.util.Log.d("PARANOID", "  FLAG_ACTIVITY_CLEAR_TASK");
+        if ((f & Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET) == Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET) android.util.Log.d("PARANOID", "  FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET");
+        if ((f & Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) android.util.Log.d("PARANOID", "  FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY");
+        if ((f & Intent.FLAG_ACTIVITY_NEW_TASK) == Intent.FLAG_ACTIVITY_NEW_TASK) android.util.Log.d("PARANOID", "  FLAG_ACTIVITY_NEW_TASK");
+        if ((f & Intent.FLAG_ACTIVITY_NO_USER_ACTION) == Intent.FLAG_ACTIVITY_NO_USER_ACTION) android.util.Log.d("PARANOID", "  FLAG_ACTIVITY_NO_USER_ACTION");
+        if ((f & Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP) == Intent.FLAG_ACTIVITY_PREVIOUS_IS_TOP) android.util.Log.d("PARANOID", "  FLAG_ACTIVITY_PREVIOUS_IS_TOP");
+        if ((f & Intent.FLAG_ACTIVITY_REORDER_TO_FRONT) == Intent.FLAG_ACTIVITY_REORDER_TO_FRONT) android.util.Log.d("PARANOID", "  FLAG_ACTIVITY_REORDER_TO_FRONT");
+        if ((f & Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED) == Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED) android.util.Log.d("PARANOID", "  FLAG_ACTIVITY_RESET_TASK_IF_NEEDED");
+        if ((f & Intent.FLAG_FROM_BACKGROUND) == Intent.FLAG_FROM_BACKGROUND) android.util.Log.d("PARANOID", "  FLAG_FROM_BACKGROUND");
+        if ((f & Intent.FLAG_ACTIVITY_NO_HISTORY) == Intent.FLAG_ACTIVITY_NO_HISTORY) android.util.Log.d("PARANOID", "  FLAG_ACTIVITY_NO_HISTORY");
+        
+        for (int i = 0; i < stack.mHistory.size(); i++) {
+            ActivityRecord r = stack.mHistory.get(i);
+            boolean floats = (r.intent.getFlags() & Intent.FLAG_FLOATING_WINDOW) == Intent.FLAG_FLOATING_WINDOW;
+            int taskId = r.task != null ? r.task.taskId : -1;
+            android.util.Log.d("PARANOID", "  --- " + r.packageName + "(" + taskId + ") floats:"+floats);
+        }
+    }
+
     ActivityRecord(ActivityManagerService _service, ActivityStack _stack, ProcessRecord _caller,
             int _launchedFromUid, Intent _intent, String _resolvedType,
             ActivityInfo aInfo, Configuration _configuration,
@@ -380,6 +412,7 @@ final class ActivityRecord {
                 labelRes = app.labelRes;
             }
             icon = aInfo.getIconResource();
+
             theme = aInfo.getThemeResource();
             realTheme = theme;
             if (realTheme == 0) {
@@ -388,6 +421,53 @@ final class ActivityRecord {
                         ? android.R.style.Theme
                         : android.R.style.Theme_Holo;
             }
+
+            // This is where the package gets its first context from the attribute-cache
+            // In order to hook its attributes we set up our check for floating mutil windows here.
+            topIntent = true;
+
+            floatingWindow = (intent.getFlags() & Intent.FLAG_FLOATING_WINDOW) == Intent.FLAG_FLOATING_WINDOW;
+
+            ActivityRecord baseRecord = stack.mHistory.size() > 0 ? stack.mHistory.get(stack.mHistory.size() -1) : null;
+
+            if (baseRecord != null) {
+
+                final boolean floats = (baseRecord.intent.getFlags() & Intent.FLAG_FLOATING_WINDOW) == Intent.FLAG_FLOATING_WINDOW;
+                final boolean taskAffinity = aInfo.applicationInfo.packageName.equals(baseRecord.packageName);
+                newTask = (intent.getFlags() & Intent.FLAG_ACTIVITY_NEW_TASK) == Intent.FLAG_ACTIVITY_NEW_TASK;
+
+                // If the current intent is not a new task we will check its top parent.
+                // Perhaps it started out as a multiwindow in which case we pass the flag on
+                if (floats && (!newTask || taskAffinity)) {
+                    intent.addFlags(Intent.FLAG_FLOATING_WINDOW);
+                    // Flag the activity as sub-task
+                    topIntent = false;
+                    floatingWindow = true;
+                }
+            }
+
+            // If this is a multiwindow activity we prevent it from messing up the history stack,
+            // like jumping back home, killing the current activity or polluting recents
+            if (floatingWindow) {
+                intent.setFlags(intent.getFlags() & ~Intent.FLAG_ACTIVITY_TASK_ON_HOME);
+                intent.setFlags(intent.getFlags() & ~Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                intent.setFlags(intent.getFlags() & ~Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NO_USER_ACTION);
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                
+                // If this is the mother-intent we make it volatile
+                if (topIntent) {
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+                }
+
+                // Change theme
+                realTheme = com.android.internal.R.style.Theme_DeviceDefault_FloatingWindow;
+            }
+
+            pf(( aInfo != null ? aInfo.applicationInfo.packageName : " >> start" ) + intent.toString(), intent.getFlags());
+
             if ((aInfo.flags&ActivityInfo.FLAG_HARDWARE_ACCELERATED) != 0) {
                 windowFlags |= WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED;
             }
@@ -406,7 +486,7 @@ final class ActivityRecord {
             
             packageName = aInfo.applicationInfo.packageName;
             launchMode = aInfo.launchMode;
-            
+
             AttributeCache.Entry ent = AttributeCache.instance().get(userId, packageName,
                     realTheme, com.android.internal.R.styleable.Window);
             fullscreen = ent != null && !ent.array.getBoolean(
