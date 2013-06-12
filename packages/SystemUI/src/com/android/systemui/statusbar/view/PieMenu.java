@@ -102,6 +102,7 @@ public class PieMenu extends FrameLayout {
     private static int ANIMATOR_SNAP_GROW = ANIMATOR_ACC_INC_15 + 2;
     private static int ANIMATOR_END = ANIMATOR_SNAP_GROW;
 
+    private static final int COLOR_OUTLINES_MASK = 0x22000000;
     private static final int COLOR_ALPHA_MASK = 0xaa000000;
     private static final int COLOR_OPAQUE_MASK = 0xff000000;
     private static final int COLOR_SNAP_BACKGROUND = 0xffffffff;
@@ -117,9 +118,8 @@ public class PieMenu extends FrameLayout {
     private static final int COLOR_BATTERY_BACKGROUND = 0xffffff;
     private static final int COLOR_STATUS = 0xffffff;
     private static final int BASE_SPEED = 1000;
-    private static final int EMPTY_ANGLE_BASE = 0;
     private static final int CHEVRON_FRAGMENTS = 16;
-    private static final float SIZE_BASE = 1f;
+    private static final float SIZE_BASE = 1.0f;
 
     // System
     private Context mContext;
@@ -138,6 +138,7 @@ public class PieMenu extends FrameLayout {
     private int mPanelOrientation;
     private int mInnerPieRadius;
     private int mOuterPieRadius;
+    private int mPieAngle;
     private int mPieGap;
     private int mInnerChevronRadius;
     private int mOuterChevronRadius;
@@ -147,7 +148,7 @@ public class PieMenu extends FrameLayout {
     private int mOuterBatteryRadius;
     private int mStatusRadius;
     private int mNotificationsRadius;
-    private int mEmptyAngle = EMPTY_ANGLE_BASE;
+    private int mEmptyAngle;
 
     private Point mCenter = new Point(0, 0);
     private float mCenterDistance = 0;
@@ -286,9 +287,11 @@ public class PieMenu extends FrameLayout {
         mStatusMode = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.PIE_MODE, 2);
         mPieSize = Settings.System.getFloat(mContext.getContentResolver(),
-                Settings.System.PIE_SIZE, 0.9f);
+                Settings.System.PIE_SIZE, 1.0f);
+        mPieAngle = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.PIE_ANGLE, 12);
         mPieGap = Settings.System.getInt(mContext.getContentResolver(),
-                Settings.System.PIE_GAP, 3);
+                Settings.System.PIE_GAP, 2);
         mHapticFeedback = Settings.System.getInt(mContext.getContentResolver(),
                 Settings.System.HAPTIC_FEEDBACK_ENABLED, 1) != 0;
 
@@ -313,7 +316,7 @@ public class PieMenu extends FrameLayout {
             mSnapPoint[snapIndex++] = new SnapPoint(mWidth / 2, mHeight - mSnapThickness / 2, mSnapRadius, 0x22, Gravity.BOTTOM);
 
         // Create Pie
-        mEmptyAngle = (int)(EMPTY_ANGLE_BASE * mPieSize);
+        mEmptyAngle = (int)(mPieAngle * mPieSize); 
         mInnerPieRadius = (int)(mResources.getDimensionPixelSize(R.dimen.pie_radius_start) * mPieSize);
         mOuterPieRadius = (int)(mInnerPieRadius + mResources.getDimensionPixelSize(R.dimen.pie_radius_increment) * mPieSize);
 
@@ -379,7 +382,7 @@ public class PieMenu extends FrameLayout {
         if (ColorUtils.getPerAppColorState(mContext)) {
             ColorUtils.ColorSettingInfo colorInfo;
             colorInfo = ColorUtils.getColorSettingInfo(mContext, Settings.System.NAV_BAR_COLOR);
-            mPieBackground.setColor(ColorUtils.extractRGB(colorInfo.lastColor) | COLOR_ALPHA_MASK);
+            mPieOutlines.setColor(ColorUtils.extractRGB(colorInfo.lastColor) | COLOR_OUTLINES_MASK);           
 
             colorInfo = ColorUtils.getColorSettingInfo(mContext, Settings.System.NAV_GLOW_COLOR);
             mPieSelected.setColor(ColorUtils.extractRGB(colorInfo.lastColor) | COLOR_ALPHA_MASK);
@@ -388,10 +391,10 @@ public class PieMenu extends FrameLayout {
             mClockPaint.setColor(colorInfo.lastColor);
             mAmPmPaint.setColor(colorInfo.lastColor);
             mClockPaint.setColor(colorInfo.lastColor);
+            mPieBackground.setColor(ColorUtils.extractRGB(colorInfo.lastColor) | COLOR_ALPHA_MASK);
 
             mChevronBackgroundLeft.setColor(ColorUtils.extractRGB(buttonColorInfo.lastColor) | COLOR_OPAQUE_MASK);
-            mChevronBackgroundRight.setColor(ColorUtils.extractRGB(buttonColorInfo.lastColor) | COLOR_OPAQUE_MASK);
-            mPieOutlines.setColor(ColorUtils.extractRGB(buttonColorInfo.lastColor) | COLOR_ALPHA_MASK);
+            mChevronBackgroundRight.setColor(ColorUtils.extractRGB(buttonColorInfo.lastColor) | COLOR_OPAQUE_MASK);            
             mBatteryJuice.setColorFilter(buttonColorInfo.isLastColorNull ? null :
                     new PorterDuffColorFilter(ColorUtils.extractRGB(buttonColorInfo.lastColor) | COLOR_OPAQUE_MASK, Mode.SRC_ATOP));
 
@@ -780,7 +783,7 @@ public class PieMenu extends FrameLayout {
                     float snapTouch = snapDistance < mSnapRadius * 7 ? 200 - (snapDistance * (200 - snap.alpha) / (mSnapRadius * 7)) : snap.alpha;
 
                     mSnapBackground.setAlpha((int)(snapTouch));
-                    int len = (int)(snap.radius * 1.3f + (snap.active ? mAnimators[ANIMATOR_SNAP_GROW].fraction * 500 : 0));
+                    int len = (int)(snap.radius * 1.3f);
                     int thick = (int)(len * 0.2f);
 
                     Path plus = new Path();
