@@ -92,7 +92,7 @@ import com.android.systemui.SystemUI;
 import com.android.systemui.recent.RecentTasksLoader;
 import com.android.systemui.recent.RecentsActivity;
 import com.android.systemui.recent.TaskDescription;
-import com.android.systemui.statusbar.Halo;
+import com.android.systemui.statusbar.halo.Halo;
 import com.android.systemui.statusbar.phone.QuickSettingsContainerView;
 import com.android.systemui.statusbar.phone.Ticker;
 import com.android.systemui.statusbar.policy.BatteryController;
@@ -527,6 +527,13 @@ public abstract class BaseStatusBar extends SystemUI implements
         settingsObserver.observe();
     }
 
+    public void setHaloTaskerActive(boolean haloTaskerActive, boolean updateNotificationIcons) {
+        mHaloTaskerActive = haloTaskerActive;
+        if (updateNotificationIcons) {
+            updateNotificationIcons();
+        }
+    }
+
     protected void updateHaloButton() {
         if (mHaloButton != null) {
             mHaloButton.setVisibility(mHaloButtonVisible && !mHaloActive ? View.VISIBLE : View.GONE);
@@ -543,7 +550,7 @@ public abstract class BaseStatusBar extends SystemUI implements
             if (mHalo == null) {
                 LayoutInflater inflater = (LayoutInflater) mContext
                         .getSystemService(Context.LAYOUT_INFLATER_SERVICE); 
-                mHalo = (Halo)inflater.inflate(R.layout.halo_layout, null);
+                mHalo = (Halo)inflater.inflate(R.layout.halo_trigger, null);
                 mHalo.setLayerType (View.LAYER_TYPE_HARDWARE, null);
                 WindowManager.LayoutParams params = mHalo.getWMParams();
                 mWindowManager.addView(mHalo,params);
@@ -1327,17 +1334,16 @@ public abstract class BaseStatusBar extends SystemUI implements
 
             if (mIntent != null) {
 
-                if (mFloat) {
+                if (mFloat && !"android".equals(mPkg) && !"com.paranoid.halo".equals(mPkg)) {
                     Intent transparent = new Intent(mContext, com.android.systemui.Transparent.class);
-                    transparent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    transparent.addFlags(Intent.FLAG_FLOATING_WINDOW);
+                    transparent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_FLOATING_WINDOW);
                     mContext.startActivity(transparent);
                 }
 
                 int[] pos = new int[2];
                 v.getLocationOnScreen(pos);
                 Intent overlay = new Intent();
-                if (mFloat) overlay.addFlags(Intent.FLAG_FLOATING_WINDOW);
+                if (mFloat) overlay.addFlags(Intent.FLAG_FLOATING_WINDOW | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 overlay.setSourceBounds(
                         new Rect(pos[0], pos[1], pos[0]+v.getWidth(), pos[1]+v.getHeight()));
                 try {

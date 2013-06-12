@@ -1,16 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.android.systemui.statusbar.Halo
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content">
-
-    <RelativeLayout
-        android:id="@+id/content"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"        
-        android:focusable="true"
-        android:soundEffectsEnabled="false">
 
         <RelativeLayout
             android:id="@+id/halo_content"      
@@ -40,21 +33,4 @@
 
         </RelativeLayout>
 
-        <TextView
-            android:id="@+id/number"
-            android:animateLayoutChanges="true"
-            android:layout_width="wrap_content" 
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:paddingLeft="5dp"
-            android:paddingRight="5dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp"
-            android:background="@drawable/halo_number"
-            android:textColor="#fff"
-            android:textStyle="bold"
-            android:textSize="16sp"/>
-
-    </RelativeLayout>
-
-</com.android.systemui.statusbar.Halo>
+</FrameLayout>
