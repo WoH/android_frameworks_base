@@ -340,13 +340,6 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     WindowState mFocusedWindow;
     IApplicationToken mFocusedApp;
 
-    // Behavior of volume wake
-    boolean mVolumeWakeScreen;
-
-    // Behavior of volbtn music controls
-    boolean mVolBtnMusicControls;
-    boolean mIsLongPress;
-
     // HW overlays state
     int mDisableOverlays = 0;
 
@@ -498,12 +491,12 @@ public class PhoneWindowManager implements WindowManagerPolicy {
     // Behavior of ENDCALL Button.  (See Settings.System.END_BUTTON_BEHAVIOR.)
     int mEndcallBehavior;
 
-    // Behavior of VOLUME Buttons for music control
-    boolean mVolBtnMusicControls;
-    // keep track of long-press state
-    boolean mIsLongPress;
     // Behavior of volume wake
     boolean mVolumeWakeScreen;
+
+    // Behavior of volbtn music controls
+    boolean mVolBtnMusicControls;
+    boolean mIsLongPress;
 
     // Behavior of trackball wake
     boolean mTrackballWakeScreen;

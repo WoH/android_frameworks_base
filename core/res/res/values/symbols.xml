@@ -1864,7 +1864,6 @@
   <java-symbol type="string" name="global_action_expanded_desktop_on" />
   <java-symbol type="string" name="global_action_screenshot" />
   <java-symbol type="string" name="reboot_system" />
-<<<<<<< HEAD
   <java-symbol type="string" name="reboot_safe_mode" />
   <java-symbol type="string" name="reboot_progress" />
 
