@@ -1912,4 +1912,9 @@
   <java-symbol type="attr" name="actionModeWebSearchDrawable" />
   <java-symbol type="string" name="websearch" />
 
+
+  <!-- WiFi SoftAp -->
+  <java-symbol type="bool" name="config_wifiApFirmwareReload" />
+  <java-symbol type="bool" name="config_wifiApStartInterface" />
+
 </resources>
