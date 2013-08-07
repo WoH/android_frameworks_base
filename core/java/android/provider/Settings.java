@@ -56,6 +56,7 @@ import android.util.Log;
 import com.android.internal.widget.ILockSettings;
 
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -812,15 +813,20 @@ public final class Settings {
 
         public boolean putStringForUser(ContentResolver cr, String name, String value,
                 final int userHandle) {
-            try {
-                Bundle arg = new Bundle();
-                arg.putString(Settings.NameValueTable.VALUE, value);
-                arg.putInt(CALL_METHOD_USER_KEY, userHandle);
-                IContentProvider cp = lazyGetProvider(cr);
-                cp.call(cr.getPackageName(), mCallSetCommand, name, arg);
-            } catch (RemoteException e) {
-                Log.w(TAG, "Can't set key " + name + " in " + mUri, e);
-                return false;
+            if (Arrays.asList(
+                    Settings.System.INSECURE_SETTINGS).contains(name)) {
+                NameValueTable.putString(cr, mUri, name, value);
+            } else {
+                try {
+                    Bundle arg = new Bundle();
+                    arg.putString(Settings.NameValueTable.VALUE, value);
+                    arg.putInt(CALL_METHOD_USER_KEY, userHandle);
+                    IContentProvider cp = lazyGetProvider(cr);
+                    cp.call(cr.getPackageName(), mCallSetCommand, name, arg);
+                } catch (RemoteException e) {
+                    Log.w(TAG, "Can't set key " + name + " in " + mUri, e);
+                    return false;
+                }
             }
             return true;
         }
@@ -1952,6 +1958,24 @@ public final class Settings {
          * not change the volume. See AudioManager.
          */
         public static final String VOLUME_BLUETOOTH_SCO = "volume_bluetooth_sco";
+
+        /**
+         * Whether the phone ringtone should be played in an increasing manner
+         * @hide
+         */
+        public static final String INCREASING_RING = "increasing_ring";
+
+        /**
+         * Minimum volume index for increasing ring volume
+         * @hide
+         */
+        public static final String INCREASING_RING_MIN_VOLUME = "increasing_ring_min_vol";
+
+        /**
+         * Time (in ms) between ringtone volume increases
+         * @hide
+         */
+        public static final String INCREASING_RING_INTERVAL = "increasing_ring_interval";
 
         /**
          * Master volume (float in the range 0.0f to 1.0f).
@@ -3439,6 +3463,7 @@ public final class Settings {
             MOVED_TO_LOCK_SETTINGS.add(Secure.LOCK_PATTERN_ENABLED);
             MOVED_TO_LOCK_SETTINGS.add(Secure.LOCK_PATTERN_VISIBLE);
             MOVED_TO_LOCK_SETTINGS.add(Secure.LOCK_PATTERN_TACTILE_FEEDBACK_ENABLED);
+            MOVED_TO_LOCK_SETTINGS.add(Secure.LOCK_SYNC_ENCRYPTION_PASSWORD);
 
             MOVED_TO_GLOBAL = new HashSet<String>();
             MOVED_TO_GLOBAL.add(Settings.Global.ADB_ENABLED);
@@ -4113,6 +4138,13 @@ public final class Settings {
          */
         public static final String LOCK_SCREEN_OWNER_INFO_ENABLED =
             "lock_screen_owner_info_enabled";
+
+        /**
+         * Whether to sync encryption password with lock screen token
+         * @hide
+         */
+        public static final String LOCK_SYNC_ENCRYPTION_PASSWORD =
+            "lock_sync_encryption_password";
 
         /**
          * The Logging ID (a unique 64-bit value) as a hex string.
