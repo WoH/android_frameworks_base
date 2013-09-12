@@ -384,6 +384,9 @@ public class ConnectivityService extends IConnectivityManager.Stub {
 
     TelephonyManager mTelephonyManager;
 
+    // We only want one checkMobileProvisioning after booting.
+    volatile boolean mFirstProvisioningCheckStarted = false;
+
     public ConnectivityService(Context context, INetworkManagementService netd,
             INetworkStatsService statsService, INetworkPolicyManager policyManager) {
         // Currently, omitting a NetworkFactory will create one internally
@@ -2743,6 +2746,17 @@ public class ConnectivityService extends IConnectivityManager.Stub {
                             state + "/" + info.getDetailedState());
                     }
 
+                    // After booting we'll check once for mobile provisioning
+                    // if we've provisioned by and connected.
+                    if (!mFirstProvisioningCheckStarted
+                            && (0 != Settings.Global.getInt(mContext.getContentResolver(),
+                                        Settings.Global.DEVICE_PROVISIONED, 0))
+                            && (state == NetworkInfo.State.CONNECTED)) {
+                        log("check provisioning after booting");
+                        mFirstProvisioningCheckStarted = true;
+                        checkMobileProvisioning(true, CheckMp.MAX_TIMEOUT_MS, null);
+                    }
+
                     EventLogTags.writeConnectivityStateChanged(
                             info.getType(), info.getSubtype(), info.getDetailedState().ordinal());
 
@@ -3561,6 +3575,8 @@ public class ConnectivityService extends IConnectivityManager.Stub {
                 + " resultReceiver=" + resultReceiver);
         enforceChangePermission();
 
+        mFirstProvisioningCheckStarted = true;
+
         int timeOutMs = suggestedTimeOutMs;
         if (suggestedTimeOutMs > CheckMp.MAX_TIMEOUT_MS) {
             timeOutMs = CheckMp.MAX_TIMEOUT_MS;
@@ -4041,6 +4057,7 @@ public class ConnectivityService extends IConnectivityManager.Stub {
 
                 String element = parser.getName();
                 if (element == null) break;
+<<<<<<< HEAD
 
                 if (element.equals(tagType)) {
                     String mcc = parser.getAttributeValue(null, ATTR_MCC);
@@ -4084,6 +4101,51 @@ public class ConnectivityService extends IConnectivityManager.Stub {
         return url;
     }
 
+=======
+
+                if (element.equals(tagType)) {
+                    String mcc = parser.getAttributeValue(null, ATTR_MCC);
+                    try {
+                        if (mcc != null && Integer.parseInt(mcc) == config.mcc) {
+                            String mnc = parser.getAttributeValue(null, ATTR_MNC);
+                            if (mnc != null && Integer.parseInt(mnc) == config.mnc) {
+                                parser.next();
+                                if (parser.getEventType() == XmlPullParser.TEXT) {
+                                    return parser.getText();
+                                }
+                            }
+                        }
+                    } catch (NumberFormatException e) {
+                        loge("NumberFormatException in getProvisioningUrlBaseFromFile: " + e);
+                    }
+                }
+            }
+            return null;
+        } catch (FileNotFoundException e) {
+            loge("Carrier Provisioning Urls file not found");
+        } catch (XmlPullParserException e) {
+            loge("Xml parser exception reading Carrier Provisioning Urls file: " + e);
+        } catch (IOException e) {
+            loge("I/O exception reading Carrier Provisioning Urls file: " + e);
+        } finally {
+            if (fileReader != null) {
+                try {
+                    fileReader.close();
+                } catch (IOException e) {}
+            }
+        }
+        return null;
+    }
+
+    private String getMobileRedirectedProvisioningUrl() {
+        String url = getProvisioningUrlBaseFromFile(REDIRECTED_PROVISIONING);
+        if (TextUtils.isEmpty(url)) {
+            url = mContext.getResources().getString(R.string.mobile_redirected_provisioning_url);
+        }
+        return url;
+    }
+
+>>>>>>> bd7615a101b509bd84f5610e37f9c80c1a767347
     public String getMobileProvisioningUrl() {
         enforceConnectivityInternalPermission();
         String url = getProvisioningUrlBaseFromFile(PROVISIONING);
