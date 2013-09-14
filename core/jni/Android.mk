@@ -213,8 +213,14 @@ LOCAL_SHARED_LIBRARIES := \
 	libharfbuzz_ng \
 	libz
 
+ifeq ($(HAVE_SELINUX),true)
+LOCAL_C_INCLUDES += external/libselinux/include
+LOCAL_SHARED_LIBRARIES += libselinux
+LOCAL_CFLAGS += -DHAVE_SELINUX
+endif # HAVE_SELINUX
+
 ifeq ($(TARGET_ARCH), arm)
-  ifeq ($(strip $(TARGET_CPU_VARIANT)), krait)
+  ifeq ($(ARCH_ARM_HAVE_NEON),true)
     TARGET_arm_CFLAGS += -DUSE_NEON_BITMAP_OPTS -mvectorize-with-neon-quad
     LOCAL_SRC_FILES+= \
 		android/graphics/Bitmap.cpp.arm
@@ -226,6 +232,7 @@ else
     LOCAL_SRC_FILES+= \
 		android/graphics/Bitmap.cpp
 endif
+
 
 ifeq ($(USE_OPENGL_RENDERER),true)
 	LOCAL_SHARED_LIBRARIES += libhwui
