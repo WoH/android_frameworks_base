@@ -58,11 +58,13 @@ public class CaptivePortalTracker extends StateMachine {
     private static final String TAG = "CaptivePortalTracker";
 
     private static final String DEFAULT_SERVER = "clients3.google.com";
+    private static final String NOTIFICATION_ID = "CaptivePortal.Notification";
 
     private static final int SOCKET_TIMEOUT_MS = 10000;
 
     private String mServer;
     private String mUrl;
+    private boolean mNotificationShown = false;
     private boolean mIsCaptivePortalCheckEnabled = false;
     private IConnectivityManager mConnService;
     private TelephonyManager mTelephonyManager;
@@ -159,12 +161,12 @@ public class CaptivePortalTracker extends StateMachine {
     private class DefaultState extends State {
         @Override
         public void enter() {
-            setNotificationOff();
+            if (DBG) log(getName() + "\n");
         }
 
         @Override
         public boolean processMessage(Message message) {
-            if (DBG) log(getName() + message.toString());
+            if (DBG) log(getName() + message.toString() + "\n");
             switch (message.what) {
                 case CMD_DETECT_PORTAL:
                     NetworkInfo info = (NetworkInfo) message.obj;
@@ -186,24 +188,23 @@ public class CaptivePortalTracker extends StateMachine {
     private class NoActiveNetworkState extends State {
         @Override
         public void enter() {
+            if (DBG) log(getName() + "\n");
             mNetworkInfo = null;
+            /* Clear any previous notification */
+            setNotificationVisible(false);
         }
 
         @Override
         public boolean processMessage(Message message) {
-            if (DBG) log(getName() + message.toString());
+            if (DBG) log(getName() + message.toString() + "\n");
             InetAddress server;
             NetworkInfo info;
             switch (message.what) {
                 case CMD_CONNECTIVITY_CHANGE:
                     info = (NetworkInfo) message.obj;
-                    if (info.getType() == ConnectivityManager.TYPE_WIFI) {
-                        if (info.isConnected() && isActiveNetwork(info)) {
-                            mNetworkInfo = info;
-                            transitionTo(mDelayedCaptiveCheckState);
-                        }
-                    } else {
-                        log(getName() + " not a wifi connectivity change, ignore");
+                    if (info.isConnected() && isActiveNetwork(info)) {
+                        mNetworkInfo = info;
+                        transitionTo(mDelayedCaptiveCheckState);
                     }
                     break;
                 default:
@@ -216,7 +217,7 @@ public class CaptivePortalTracker extends StateMachine {
     private class ActiveNetworkState extends State {
         @Override
         public void enter() {
-            setNotificationOff();
+            if (DBG) log(getName() + "\n");
         }
 
         @Override
@@ -249,6 +250,7 @@ public class CaptivePortalTracker extends StateMachine {
     private class DelayedCaptiveCheckState extends State {
         @Override
         public void enter() {
+            if (DBG) log(getName() + "\n");
             Message message = obtainMessage(CMD_DELAYED_CAPTIVE_CHECK, ++mDelayedCheckToken, 0);
             if (mDeviceProvisioned) {
                 sendMessageDelayed(message, DELAYED_CHECK_INTERVAL_MS);
@@ -259,7 +261,7 @@ public class CaptivePortalTracker extends StateMachine {
 
         @Override
         public boolean processMessage(Message message) {
-            if (DBG) log(getName() + message.toString());
+            if (DBG) log(getName() + message.toString() + "\n");
             switch (message.what) {
                 case CMD_DELAYED_CAPTIVE_CHECK:
                     if (message.arg1 == mDelayedCheckToken) {
@@ -275,12 +277,7 @@ public class CaptivePortalTracker extends StateMachine {
                             if (captive) {
                                 // Setup Wizard will assist the user in connecting to a captive
                                 // portal, so make the notification visible unless during setup
-                                try {
-                                    mConnService.setProvisioningNotificationVisible(true,
-                                        mNetworkInfo.getType(), mNetworkInfo.getExtraInfo(), mUrl);
-                                } catch(RemoteException e) {
-                                    e.printStackTrace();
-                                }
+                                setNotificationVisible(true);
                             }
                         } else {
                             Intent intent = new Intent(
@@ -338,15 +335,6 @@ public class CaptivePortalTracker extends StateMachine {
         return false;
     }
 
-    private void setNotificationOff() {
-        try {
-            mConnService.setProvisioningNotificationVisible(false, ConnectivityManager.TYPE_NONE,
-                    null, null);
-        } catch (RemoteException e) {
-            log("setNotificationOff: " + e);
-        }
-    }
-
     /**
      * Do a URL fetch on a known server to see if we get the data we expect
      */
@@ -366,6 +354,9 @@ public class CaptivePortalTracker extends StateMachine {
             urlConnection.getInputStream();
             // we got a valid response, but not from the real google
             return urlConnection.getResponseCode() != 204;
+        } catch (SocketTimeoutException e) {
+            if (DBG) log("Probably a portal: exception " + e);
+            return true;
         } catch (IOException e) {
             if (DBG) log("Probably not a portal: exception " + e);
             return false;
@@ -388,5 +379,76 @@ public class CaptivePortalTracker extends StateMachine {
             if (a instanceof Inet4Address) return a;
         }
         return null;
+    }
+
+    private void setNotificationVisible(boolean visible) {
+        // if it should be hidden and it is already hidden, then noop
+        if (!visible && !mNotificationShown) {
+            if (DBG) log("setNotivicationVisible: false and not shown, so noop");
+            return;
+        }
+
+        Resources r = Resources.getSystem();
+        NotificationManager notificationManager = (NotificationManager) mContext
+            .getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (visible) {
+            CharSequence title;
+            CharSequence details;
+            int icon;
+            String url = null;
+            switch (mNetworkInfo.getType()) {
+                case ConnectivityManager.TYPE_WIFI:
+                    title = r.getString(R.string.wifi_available_sign_in, 0);
+                    details = r.getString(R.string.network_available_sign_in_detailed,
+                            mNetworkInfo.getExtraInfo());
+                    icon = R.drawable.stat_notify_wifi_in_range;
+                    url = mUrl;
+                    break;
+                case ConnectivityManager.TYPE_MOBILE:
+                    title = r.getString(R.string.network_available_sign_in, 0);
+                    // TODO: Change this to pull from NetworkInfo once a printable
+                    // name has been added to it
+                    details = mTelephonyManager.getNetworkOperatorName();
+                    icon = R.drawable.stat_notify_rssi_in_range;
+                    try {
+                        url = mConnService.getMobileProvisioningUrl();
+                        if (TextUtils.isEmpty(url)) {
+                            url = mConnService.getMobileRedirectedProvisioningUrl();
+                        }
+                    } catch(RemoteException e) {
+                        e.printStackTrace();
+                    }
+                    if (TextUtils.isEmpty(url)) {
+                        url = mUrl;
+                    }
+                    break;
+                default:
+                    title = r.getString(R.string.network_available_sign_in, 0);
+                    details = r.getString(R.string.network_available_sign_in_detailed,
+                            mNetworkInfo.getExtraInfo());
+                    icon = R.drawable.stat_notify_rssi_in_range;
+                    url = mUrl;
+                    break;
+            }
+
+            Notification notification = new Notification();
+            notification.when = 0;
+            notification.icon = icon;
+            notification.flags = Notification.FLAG_AUTO_CANCEL;
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            intent.setFlags(Intent.FLAG_ACTIVITY_BROUGHT_TO_FRONT |
+                    Intent.FLAG_ACTIVITY_NEW_TASK);
+            notification.contentIntent = PendingIntent.getActivity(mContext, 0, intent, 0);
+            notification.tickerText = title;
+            notification.setLatestEventInfo(mContext, title, details, notification.contentIntent);
+
+            if (DBG) log("setNotivicationVisible: make visible");
+            notificationManager.notify(NOTIFICATION_ID, 1, notification);
+        } else {
+            if (DBG) log("setNotivicationVisible: cancel notification");
+            notificationManager.cancel(NOTIFICATION_ID, 1);
+        }
+        mNotificationShown = visible;
     }
 }
