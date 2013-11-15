@@ -593,7 +593,7 @@
     <bool name="config_enableLockScreenRotation">false</bool>
 
     <!-- Disable lockscreen translucent decor by default -->
-    <bool name="config_enableLockScreenTranslucentDecor">false</bool>
+    <bool name="config_enableLockScreenTranslucentDecor">true</bool>
 
     <!-- Enable translucent decor by default -->
     <bool name="config_enableTranslucentDecor">true</bool>
@@ -783,6 +783,7 @@
     <string-array name="config_locationProviderPackageNames" translatable="false">
         <!-- The standard AOSP fused location provider -->
         <item>com.android.location.fused</item>
+        <item>com.google.android.gms</item>
     </string-array>
 
     <!-- Component name of the service providing geofence API support. -->
