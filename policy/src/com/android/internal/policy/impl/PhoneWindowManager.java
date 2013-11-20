@@ -552,7 +552,7 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                     Settings.Secure.IMMERSIVE_MODE_CONFIRMATIONS), false, this,
                     UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
-                    Settings.System.TRACKBALL_WAKE_SCREEN), false, this);
+                    Settings.System.TRACKBALL_WAKE_SCREEN), false, this,
                     UserHandle.USER_ALL);
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.VOLUME_WAKE_SCREEN), false, this,
